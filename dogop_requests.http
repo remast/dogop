@@ -1,0 +1,11 @@
+GET http://localhost:8080/
+
+###
+
+POST http://localhost:8080/api/quote
+content-type: application/json
+
+{
+   "age": 8,
+    "breed": "chow"
+}

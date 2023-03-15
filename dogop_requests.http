@@ -7,5 +7,5 @@ content-type: application/json
 
 {
    "age": 8,
-    "breed": "chow"
+   "breed": "chow"
 }

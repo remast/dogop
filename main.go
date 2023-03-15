@@ -16,7 +16,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/hellofresh/health-go/v5"
-	healthPgx4 "github.com/hellofresh/health-go/v5/checks/pgx4"
+	healthPgx "github.com/hellofresh/health-go/v5/checks/pgx4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
 	"schneider.vip/problem"
@@ -120,7 +120,7 @@ func main() {
 			Name:      "db",
 			Timeout:   time.Second * 2,
 			SkipOnErr: false,
-			Check: healthPgx4.New(healthPgx4.Config{
+			Check: healthPgx.New(healthPgx.Config{
 				DSN: config.Db,
 			}),
 		},

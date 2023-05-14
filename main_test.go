@@ -20,7 +20,7 @@ func TestHandleQuote(t *testing.T) {
 	`
 	req, _ := http.NewRequest("GET", "/api/quote", strings.NewReader(body))
 
-	// 3. Hander Funktion aufrufen
+	// 3. Handler Funktion aufrufen
 	HandleQuote(recorder, req)
 
 	// 4. Return Code prüfen

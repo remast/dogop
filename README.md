@@ -1,46 +1,16 @@
-```
-go mod init ppix/dogop
-```
+# Go über den Wolken - Code Beispiel
 
-go get github.com/go-chi/chi/v5
+## Nützliche Befehle
 
-go build -o build/dogop .
+- Tests ausführen mit: `go test -v ./...`
 
-docker build . -t dogop
+- Anwendung ausführe: `go run .`
 
-docker run -p 8080:8080 dogop
+- Ausführen mit Hot Reload über [air](https://github.com/cosmtrek/air): `air`
 
-go get github.com/jackc/pgx/v5/pgxpool
-go get github.com/jackc/pgx/v5
+## Projekt aufsetzen
 
-go get github.com/golang-migrate/migrate/v4
-go get github.com/golang-migrate/migrate/v4/database/pgx
-go get github.com/golang-migrate/migrate/v4/source/iofs
+Go Modul erstellen mit `go mod init ppix/dogop`.
 
-go get github.com/hellofresh/health-go/v5
-go get github.com/hellofresh/health-go/v5/checks/pgx4
+Erste Dependency einbinden mit `go get github.com/go-chi/chi/v5`.
 
-```go
-package main
-
-import (
-	"net/http"
-
-	"github.com/go-chi/chi/v5"
-)
-
-func main() {
-	r := chi.NewRouter()
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello DogOp!"))
-	})
-	http.ListenAndServe(":8080", r)
-}
-```
-
-INSERT INTO
-dealer (user_id)
-SELECT
-id
-FROM
-rows RETURNING id INTO l_dealerid;

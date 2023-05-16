@@ -45,7 +45,7 @@ func HandleQuote(w http.ResponseWriter, r *http.Request) {
 	var quote Quote
 	err := json.NewDecoder(r.Body).Decode(&quote)
 	if err != nil {
-		http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusBadRequest)
+		problem.New(problem.Wrap(err), problem.Status(http.StatusBadRequest)).WriteTo(w)
 		return
 	}
 
@@ -54,7 +54,7 @@ func HandleQuote(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(quote)
 	if err != nil {
-		http.Error(w, problem.New(problem.Wrap(err)).JSONString(), http.StatusInternalServerError)
+		problem.New(problem.Wrap(err), problem.Status(http.StatusInternalServerError)).WriteTo(w)
 	}
 }
 
@@ -132,5 +132,6 @@ func main() {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello DogOp!"))
 	})
+
 	http.ListenAndServe(fmt.Sprintf(":%v", config.Port), r)
 }

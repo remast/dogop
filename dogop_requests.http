@@ -9,20 +9,3 @@ content-type: application/json
    "age": 8,
    "breed": "chow"
 }
-
-###
-
-POST http://localhost:8080/api/offer
-content-type: application/json
-
-{
-   "name": "Rollo",
-   "age": 8,
-   "breed": "chow",
-   "customer": "jan"
-}
-
-
-###
-
-GET http://localhost:8080/api/offer/427ed4de-6f51-4a09-baad-e3c2f962d2fe

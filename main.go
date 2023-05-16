@@ -108,6 +108,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Post("/api/quote", HandleQuote)
 
+	// CRUD API für Angebote
 	offerRepository := &OfferRepository{connPool: connPool}
 	r.Route("/api/offer", func(sr chi.Router) {
 		sr.Post("/", HandleCreateOffer(offerRepository))
@@ -126,7 +127,7 @@ func main() {
 		},
 	))
 
-	// Register Handler Function
+	// Register Health Check Handler Function
 	r.Get("/health", h.HandlerFunc)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

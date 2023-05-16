@@ -121,7 +121,7 @@ func (r *OfferRepository) FindByID(ctx context.Context, offerID uuid.UUID) (*Off
 	err := row.Scan(&id, &customer, &age, &breed, &name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, OfferNotFound
+			return nil, ErrOfferNotFound
 		}
 
 		return nil, err

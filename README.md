@@ -8,6 +8,8 @@
 
 - Ausführen mit Hot Reload über [air](https://github.com/cosmtrek/air): `air`
 
+- Go Dokumentation lesen: `go doc http.HandlerFunc`
+
 ## Projekt aufsetzen
 
 Go Modul erstellen mit `go mod init ppix/dogop`.

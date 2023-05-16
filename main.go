@@ -1,19 +1,14 @@
 package main
 
 import (
-	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/kelseyhightower/envconfig"
 )
-
-//go:embed migrations
-var migrations embed.FS
 
 type Config struct {
 	Port string `default:"8080"`

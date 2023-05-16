@@ -21,7 +21,7 @@ type Offer struct {
 	Name     string `json:"name"`
 }
 
-var OfferNotFound = errors.New("offer not found")
+var ErrOfferNotFound = errors.New("offer not found")
 
 func HandleCreateOffer(offerRepository *OfferRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -40,12 +40,25 @@ func HandleCreateOffer(offerRepository *OfferRepository) http.HandlerFunc {
 func HandleReadOffer(offerRepository *OfferRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 1. Offer lesen
-		id := chi.URLParam(r, "ID")
+		id, err := uuid.Parse(chi.URLParam(r, "ID"))
+		if err != nil {
+			problem.New(
+				problem.Title("invalid request"),
+				problem.Wrap(err),
+				problem.Status(http.StatusBadRequest),
+			).WriteTo(w)
+			return
+		}
+
 		offer, err := offerRepository.FindByID(r.Context(), id)
 
 		// 2. Fehler prüfen
-		if errors.Is(err, OfferNotFound) {
-			http.Error(w, problem.New(problem.Title("offer not found")).JSONString(), http.StatusNotFound)
+		if errors.Is(err, ErrOfferNotFound) {
+			problem.New(problem.Title("offer not found"), problem.Status(http.StatusNotFound)).WriteTo(w)
+			return
+		}
+		if err != nil {
+			problem.New(problem.Title(err.Error()), problem.Status(http.StatusInternalServerError)).WriteTo(w)
 			return
 		}
 
@@ -64,9 +77,10 @@ func (r *OfferRepository) Insert(ctx context.Context, offer *Offer) (*Offer, err
 
 	// 2. Transaktion beginnen
 	tx, _ := r.connPool.Begin(ctx)
+	defer tx.Rollback(ctx)
 
 	// 3. Offer per Insert speichern
-	_, _ = tx.Exec(
+	_, err := tx.Exec(
 		ctx,
 		`INSERT INTO offers 
 		   (id, customer, age, breed, name) 
@@ -78,6 +92,9 @@ func (r *OfferRepository) Insert(ctx context.Context, offer *Offer) (*Offer, err
 		offer.Breed,
 		offer.Name,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	// 4. Transaktion commiten
 	tx.Commit(ctx)
@@ -86,18 +103,22 @@ func (r *OfferRepository) Insert(ctx context.Context, offer *Offer) (*Offer, err
 	return offer, nil
 }
 
-func (r *OfferRepository) FindByID(ctx context.Context, offerID string) (*Offer, error) {
+func (r *OfferRepository) FindByID(ctx context.Context, offerID uuid.UUID) (*Offer, error) {
 	row := r.connPool.QueryRow(ctx,
-		`SELECT activity_id as id, description, start_time, end_time, username, org_id, project_id 
-         FROM activities 
-	     WHERE activity_id = $1`,
+		`SELECT id, customer, age, breed, name 
+         FROM offers 
+	     WHERE id = $1`,
 		offerID)
 
 	var (
-		id string
+		id       string
+		customer string
+		age      int
+		breed    string
+		name     string
 	)
 
-	err := row.Scan(&id)
+	err := row.Scan(&id, &customer, &age, &breed, &name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, OfferNotFound
@@ -107,7 +128,11 @@ func (r *OfferRepository) FindByID(ctx context.Context, offerID string) (*Offer,
 	}
 
 	offer := &Offer{
-		ID: id,
+		ID:       id,
+		Customer: customer,
+		Breed:    breed,
+		Age:      age,
+		Name:     name,
 	}
 
 	return offer, nil

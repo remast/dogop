@@ -109,9 +109,9 @@ func main() {
 	r.Post("/api/quote", HandleQuote)
 
 	offerRepository := &OfferRepository{connPool: connPool}
-	r.Route("/api/offer", func(r chi.Router) {
-		r.Post("/", HandleCreateOffer(offerRepository))
-		r.Get("/{ID}", HandleReadOffer(offerRepository))
+	r.Route("/api/offer", func(sr chi.Router) {
+		sr.Post("/", HandleCreateOffer(offerRepository))
+		sr.Get("/{ID}", HandleReadOffer(offerRepository))
 	})
 
 	// Register Health Check
@@ -125,6 +125,8 @@ func main() {
 			}),
 		},
 	))
+
+	// Register Handler Function
 	r.Get("/health", h.HandlerFunc)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

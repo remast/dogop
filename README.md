@@ -12,7 +12,7 @@
 
 ## Projekt aufsetzen
 
-Go Modul erstellen mit `go mod init ppix/dogop`.
+Go Modul erstellen mit `go mod init crossnative/dogop`.
 
 Erste Dependency einbinden mit `go get github.com/go-chi/chi/v5`.
 

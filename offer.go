@@ -54,11 +54,17 @@ func HandleReadOffer(offerRepository *OfferRepository) http.HandlerFunc {
 
 		// 2. Fehler prüfen
 		if errors.Is(err, ErrOfferNotFound) {
-			problem.New(problem.Title("offer not found"), problem.Status(http.StatusNotFound)).WriteTo(w)
+			problem.New(
+				problem.Title("offer not found"),
+				problem.Status(http.StatusNotFound),
+			).WriteTo(w)
 			return
 		}
 		if err != nil {
-			problem.New(problem.Title(err.Error()), problem.Status(http.StatusInternalServerError)).WriteTo(w)
+			problem.New(
+				problem.Title(err.Error()),
+				problem.Status(http.StatusInternalServerError),
+			).WriteTo(w)
 			return
 		}
 

@@ -54,7 +54,10 @@ func HandleQuote(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(quote)
 	if err != nil {
-		problem.New(problem.Wrap(err), problem.Status(http.StatusInternalServerError)).WriteTo(w)
+		problem.New(
+			problem.Wrap(err),
+			problem.Status(http.StatusInternalServerError),
+		).WriteTo(w)
 	}
 }
 

@@ -4,11 +4,15 @@
 
 - Tests ausführen mit: `go test -v ./...`
 
-- Anwendung ausführe: `go run .`
+- Anwendung bauen: `go build -o build/dogop .`
+
+- Anwendung ausführen: `go run .`
 
 - Ausführen mit Hot Reload über [air](https://github.com/cosmtrek/air): `air`
 
 - Go Dokumentation lesen: `go doc http.HandlerFunc`
+
+- Docker Container bauen: `docker build . -t crossnative/dogop`
 
 ## Projekt aufsetzen
 

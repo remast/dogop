@@ -3,7 +3,7 @@ module crossnative/dogop
 go 1.20
 
 require (
-	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-chi/chi/v5 v5.0.11
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/google/uuid v1.5.0
 	github.com/hellofresh/health-go/v5 v5.5.1

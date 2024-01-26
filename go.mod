@@ -9,7 +9,7 @@ require (
 	github.com/hellofresh/health-go/v5 v5.5.2
 	github.com/jackc/pgx/v5 v5.5.2
 	github.com/kelseyhightower/envconfig v1.4.0
-	schneider.vip/problem v1.9.0
+	schneider.vip/problem v1.9.1
 )
 
 require (

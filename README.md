@@ -20,3 +20,10 @@ Go Modul erstellen mit `go mod init crossnative/dogop`.
 
 Erste Dependency einbinden mit `go get github.com/go-chi/chi/v5`.
 
+## Docker Container bauen
+
+### Cloudnative Buildpacks nutzen
+
+    pack build dogop-cnb --buildpack paketo-buildpacks/go --builder paketobuildpacks/builder-jammy-base
+
+    docker run --network host dogop-cnb

@@ -137,5 +137,6 @@ func main() {
 		w.Write([]byte("Hello DogOp!"))
 	})
 
+	log.Println(fmt.Sprintf("Listening on port %v", config.Port))
 	http.ListenAndServe(fmt.Sprintf(":%v", config.Port), r)
 }

@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
@@ -108,15 +107,13 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	r := chi.NewRouter()
-	r.Post("/api/quote", HandleQuote)
+	r := http.NewServeMux()
+	r.HandleFunc("POST /api/quote", HandleQuote)
 
 	// CRUD API für Angebote
 	offerRepository := &OfferRepository{connPool: connPool}
-	r.Route("/api/offer", func(sr chi.Router) {
-		sr.Post("/", HandleCreateOffer(offerRepository))
-		sr.Get("/{ID}", HandleReadOffer(offerRepository))
-	})
+	r.HandleFunc("POST /api/offer", HandleCreateOffer(offerRepository))
+	r.HandleFunc("GET /api/offer/{ID}", HandleReadOffer(offerRepository))
 
 	// Register Health Check
 	h, _ := health.New(health.WithChecks(
@@ -131,12 +128,12 @@ func main() {
 	))
 
 	// Register Health Check Handler Function
-	r.Get("/health", h.HandlerFunc)
+	r.HandleFunc("GET /health", h.HandlerFunc)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello DogOp!"))
 	})
 
-	log.Println(fmt.Sprintf("Listening on port %v", config.Port))
+	log.Printf("Listening on port %v", config.Port)
 	http.ListenAndServe(fmt.Sprintf(":%v", config.Port), r)
 }

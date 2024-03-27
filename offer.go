@@ -6,7 +6,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -40,7 +39,7 @@ func HandleCreateOffer(offerRepository *OfferRepository) http.HandlerFunc {
 func HandleReadOffer(offerRepository *OfferRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 1. Offer lesen
-		id, err := uuid.Parse(chi.URLParam(r, "ID"))
+		id, err := uuid.Parse(r.PathValue("ID"))
 		if err != nil {
 			problem.New(
 				problem.Title("invalid request"),

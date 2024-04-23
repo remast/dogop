@@ -1,0 +1,6 @@
+:9090 {
+	tracing {
+		span "{method} {scheme}://{hostport}{uri}"
+	}
+	reverse_proxy localhost:8080
+}

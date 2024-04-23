@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/exaring/otelpgx"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx"
@@ -19,7 +20,18 @@ import (
 	healthPgx "github.com/hellofresh/health-go/v5/checks/pgx4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/riandyrn/otelchi"
 	"schneider.vip/problem"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
 //go:embed migrations
@@ -42,6 +54,9 @@ type Tariff struct {
 }
 
 func HandleQuote(w http.ResponseWriter, r *http.Request) {
+	_, span := otel.Tracer("mux-server").Start(r.Context(), "quote")
+	defer span.End()
+
 	var quote Quote
 	err := json.NewDecoder(r.Body).Decode(&quote)
 	if err != nil {
@@ -67,7 +82,14 @@ func Connect(dbURL string) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	connPool, err := pgxpool.New(context.Background(), dbURL)
+	cfg, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, fmt.Errorf("create connection pool: %w", err)
+	}
+
+	cfg.ConnConfig.Tracer = otelpgx.NewTracer()
+
+	connPool, err := pgxpool.NewWithConfig(context.Background(), cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +130,11 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	// Set up OpenTelemetry.
+	setupOTelSDK(context.Background())
+
 	r := chi.NewRouter()
+	r.Use(otelchi.Middleware("my-server", otelchi.WithChiRoutes(r)))
 	r.HandleFunc("POST /api/quote", HandleQuote)
 
 	// CRUD API für Angebote
@@ -137,4 +163,114 @@ func main() {
 
 	log.Printf("Listening on port %v", config.Port)
 	http.ListenAndServe(fmt.Sprintf(":%v", config.Port), r)
+}
+
+// setupOTelSDK bootstraps the OpenTelemetry pipeline.
+// If it does not return an error, make sure to call shutdown for proper cleanup.
+func setupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
+	var shutdownFuncs []func(context.Context) error
+
+	// shutdown calls cleanup functions registered via shutdownFuncs.
+	// The errors from the calls are joined.
+	// Each registered cleanup will be invoked once.
+	shutdown = func(ctx context.Context) error {
+		var err error
+		for _, fn := range shutdownFuncs {
+			err = errors.Join(err, fn(ctx))
+		}
+		shutdownFuncs = nil
+		return err
+	}
+
+	// handleErr calls shutdown for cleanup and makes sure that all errors are returned.
+	handleErr := func(inErr error) {
+		err = errors.Join(inErr, shutdown(ctx))
+	}
+
+	// Set up propagator.
+	prop := newPropagator()
+	otel.SetTextMapPropagator(prop)
+
+	// Set up trace provider.
+	tracerProvider, err := newTraceProvider()
+	if err != nil {
+		handleErr(err)
+		return
+	}
+	// initialize tracer
+	otel.Tracer("mux-server")
+	shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
+	otel.SetTracerProvider(tracerProvider)
+
+	// Set up meter provider.
+	meterProvider, err := newMeterProvider()
+	if err != nil {
+		handleErr(err)
+		return
+	}
+	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+	otel.SetMeterProvider(meterProvider)
+
+	return
+}
+
+func newPropagator() propagation.TextMapPropagator {
+	return propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	)
+}
+
+func newTraceProvider() (*trace.TracerProvider, error) {
+
+	var opts []otlptracehttp.Option
+	opts = []otlptracehttp.Option{otlptracehttp.WithInsecure(), otlptracehttp.WithEndpointURL("http://localhost:4318")}
+
+	traceExporter, err := otlptrace.New(
+		context.Background(),
+		otlptracehttp.NewClient(opts...),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	/*
+		traceProvider := trace.NewTracerProvider(
+			trace.WithBatcher(traceExporter,
+				// Default is 5s. Set to 1s for demonstrative purposes.
+				trace.WithBatchTimeout(time.Second)),
+		)
+	*/
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			// the service name used to display traces in backends
+			semconv.ServiceNameKey.String("mux-server"),
+		),
+	)
+	if err != nil {
+		log.Fatalf("unable to initialize resource due: %v", err)
+	}
+	return trace.NewTracerProvider(
+		trace.WithSampler(trace.AlwaysSample()),
+		trace.WithBatcher(traceExporter),
+		trace.WithResource(res),
+	), nil
+}
+
+// See also https://uptrace.dev/opentelemetry/prometheus-metrics.html#sending-metrics-from-go-to-prometheus
+func newMeterProvider() (*metric.MeterProvider, error) {
+
+	metricExporter, err := otlpmetrichttp.New(context.Background(), otlpmetrichttp.WithInsecure(), otlpmetrichttp.WithEndpointURL("http://localhost:4318"))
+	//metricExporter, err := stdoutmetric.New()
+	if err != nil {
+		return nil, err
+	}
+
+	meterProvider := metric.NewMeterProvider(
+		metric.WithReader(metric.NewPeriodicReader(metricExporter,
+			// Default is 1m. Set to 3s for demonstrative purposes.
+			metric.WithInterval(3*time.Second))),
+	)
+	return meterProvider, nil
 }

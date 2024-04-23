@@ -1,0 +1,8 @@
+:4200 {
+	tracing {
+		span "{method} {scheme}://{hostport}{uri}"
+	}
+	root * .
+	encode gzip
+	file_server
+}

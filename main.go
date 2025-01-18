@@ -107,16 +107,16 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	r := http.NewServeMux()
-	r.HandleFunc("POST /api/quote", HandleQuote)
+	router := http.NewServeMux()
+	router.HandleFunc("POST /api/quote", HandleQuote)
 
 	// CRUD API für Angebote
 	offerRepository := &OfferRepository{connPool: connPool}
-	r.HandleFunc("POST /api/offer", HandleCreateOffer(offerRepository))
-	r.HandleFunc("GET /api/offer/{ID}", HandleReadOffer(offerRepository))
+	router.HandleFunc("POST /api/offer", HandleCreateOffer(offerRepository))
+	router.HandleFunc("GET /api/offer/{ID}", HandleReadOffer(offerRepository))
 
 	// Register Health Check
-	h, _ := health.New(health.WithChecks(
+	healthChecks, _ := health.New(health.WithChecks(
 		health.Config{
 			Name:      "db",
 			Timeout:   time.Second * 2,
@@ -128,12 +128,12 @@ func main() {
 	))
 
 	// Register Health Check Handler Function
-	r.HandleFunc("GET /health", h.HandlerFunc)
+	router.HandleFunc("GET /health", healthChecks.HandlerFunc)
 
-	r.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello DogOp!"))
 	})
 
 	log.Printf("Listening on port %v", config.Port)
-	http.ListenAndServe(fmt.Sprintf(":%v", config.Port), r)
+	http.ListenAndServe(fmt.Sprintf(":%v", config.Port), router)
 }

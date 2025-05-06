@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -50,10 +49,10 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	r := chi.NewRouter()
-	r.Post("/api/quote", HandleQuote)
+	r := http.NewServeMux()
+	r.HandleFunc("POST /api/quote", HandleQuote)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello DogOp!"))
 	})
 

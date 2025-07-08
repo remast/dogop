@@ -2,7 +2,7 @@ module crossnative/dogop
 
 go 1.24
 
-toolchain go1.24.4
+toolchain go1.24.5
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.18.3

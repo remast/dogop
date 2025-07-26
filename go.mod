@@ -7,7 +7,7 @@ toolchain go1.24.5
 require (
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/uuid v1.6.0
-	github.com/hellofresh/health-go/v5 v5.5.4
+	github.com/hellofresh/health-go/v5 v5.5.5
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/kelseyhightower/envconfig v1.4.0
 	schneider.vip/problem v1.9.1
